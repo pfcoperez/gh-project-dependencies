@@ -1,4 +1,4 @@
-module Data.String.Utils (strip)  where
+module Data.String.Utils (strip, findTaggedUrls)  where
 
 import Data.Char
 import Data.Maybe as Maybe
@@ -9,7 +9,7 @@ strip :: String -> String
 strip = dropWhile isSpace . reverse . dropWhile isSpace . reverse
 
 
-findTaggedUrls :: String -> Map String URI
+findTaggedUrls :: String -> Map.Map String URI
 findTaggedUrls text =
     let ws = words $ Prelude.map toLower text
         entries =  zip ws $ Prelude.map URI.parseURI $ tail ws
@@ -17,4 +17,4 @@ findTaggedUrls text =
                                  (key, Just url) -> (key, url) : acc
                                  _ -> acc
                              ) [] entries
-    in fromList urls
+    in Map.fromList urls
