@@ -6,7 +6,7 @@ import Data.String.Utils
 import qualified Data.Graph as Graph
 import qualified GitHub.Endpoints.Issues as Issues
 import GitHub.Data.Id (Id (Id))
---import GitHub.Data.Name (Name (Name))
+import GitHub.Data (mkOwnerName, mkRepoName)
 import Data.String (fromString)
 import Data.Text (unpack)
 import System.Environment (lookupEnv, getArgs)
@@ -15,6 +15,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
 import qualified Network.URI as URI
 import Data.Char (isDigit)
+import Data.Text (pack)
 
 maybeIssueId :: String -> String -> URI.URI -> Maybe Int
 maybeIssueId organization repository uri = case (URI.pathSegments uri) of
@@ -27,7 +28,9 @@ maybeIssueId organization repository uri = case (URI.pathSegments uri) of
 
 metaIssueGraph :: String -> String -> String -> Int -> IO (Graph.Graph Int)
 metaIssueGraph token organization repository issueId =
-  let fetchIssue issueId = Issues.issue' (Just $ Issues.OAuth $ fromString token) "elastic" "cloud" (Id issueId) --TODO
+  let owner = mkOwnerName $ pack organization
+      repo = mkRepoName $ pack repository
+      fetchIssue issueId = Issues.issue' (Just $ Issues.OAuth $ fromString token) owner repo (Id issueId)
       discoverIO issueId = do
         errorOrIssue <- fetchIssue issueId
         let blockers issue =
