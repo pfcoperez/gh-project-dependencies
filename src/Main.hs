@@ -49,7 +49,12 @@ metaIssueGraph token organization repository issueId =
   in do
     seeds <- subIssues
     Graph.deepExploreIO discoverIO seeds Graph.empty
-        
+
+parseArgs :: [String] -> (Either String (String, String, Int))
+parseArgs [orgStr, repoStr, issueStr]
+  | all isDigit issueStr = Right (orgStr, repoStr, read issueStr)
+  | otherwise = Left "Organization, repository and issue arguments are required"
+parseArgs _ = Left "Invalid arguments list"
 
 main :: IO ()
 main = do
@@ -61,10 +66,13 @@ main = do
       exitSuccess
   let Just token = maybeToken
 
-  graph <- metaIssueGraph token "elastic" "cloud" 22175
+  strArgs <- getArgs
 
-  putStrLn $ show graph
-  
+  res <- either return ( \ (organization, repository, issue) ->
+                           fmap show $ metaIssueGraph token organization repository issue
+                       ) $ parseArgs strArgs  
+
+  putStrLn res
 
 --  errorOrIssue <- Issues.issue' (Just $ Issues.OAuth $ fromString token) "elastic" "cloud" (Id 22233)
 --  putStrLn $ either
