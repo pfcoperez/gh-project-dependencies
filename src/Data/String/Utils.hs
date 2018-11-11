@@ -1,4 +1,4 @@
-module Data.String.Utils (strip, findTaggedUrls, findAllUrls)  where
+module Data.String.Utils (strip, findTaggedUrls, findAllUrls, filterWords)  where
 
 import Data.Char
 import qualified Data.Maybe as Maybe
@@ -8,6 +8,8 @@ import qualified Data.Map.Strict as Map
 strip :: String -> String
 strip = dropWhile isSpace . reverse . dropWhile isSpace . reverse
 
+filterWords :: [String] -> String -> String
+filterWords filteredWords text = unwords $ filter (\x -> notElem x filteredWords) $ words text  
 
 findTaggedUrls :: String -> Map.Map String [URI]
 findTaggedUrls text =
