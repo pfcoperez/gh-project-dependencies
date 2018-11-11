@@ -12,6 +12,8 @@ import Data.Text (unpack)
 import System.Environment (lookupEnv, getArgs)
 import System.Exit (exitSuccess)
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
+import qualified Data.Tree as Tree
 import qualified Data.Maybe as Maybe
 import qualified Network.URI as URI
 import Data.Char (isDigit)
@@ -50,10 +52,10 @@ metaIssueGraph token organization repository issueId =
     seeds <- subIssues
     Graph.deepExploreIO discoverIO seeds Graph.empty
 
-parseArgs :: [String] -> (Either String (String, String, Int))
-parseArgs [orgStr, repoStr, issueStr]
-  | all isDigit issueStr = Right (orgStr, repoStr, read issueStr)
-  | otherwise = Left "Organization, repository and issue arguments are required"
+parseArgs :: [String] -> (Either String (String, String, Int, Int))
+parseArgs [orgStr, repoStr, metaIssueStr, issueStr]
+  | all (all isDigit) [metaIssueStr, issueStr] = Right (orgStr, repoStr, read metaIssueStr, read issueStr)
+  | otherwise = Left "Organization, repository, metaissue and issue arguments are required"
 parseArgs _ = Left "Invalid arguments list"
 
 main :: IO ()
@@ -68,13 +70,11 @@ main = do
 
   strArgs <- getArgs
 
-  res <- either return ( \ (organization, repository, issue) ->
-                           fmap show $ metaIssueGraph token organization repository issue
+  res <- either return ( \ (organization, repository, metaIssue, issue) ->
+                           do
+                             graph <- metaIssueGraph token organization repository metaIssue
+                             let tree = fmap show $ Graph.graphToTree issue Set.empty graph
+                             return $ Tree.drawTree tree
                        ) $ parseArgs strArgs  
 
   putStrLn res
-
---  errorOrIssue <- Issues.issue' (Just $ Issues.OAuth $ fromString token) "elastic" "cloud" (Id 22233)
---  putStrLn $ either
---    (\error -> "Error")
---    (show . fmap (findTaggedUrls . unpack) . Issues.issueBody) errorOrIssue
