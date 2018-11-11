@@ -36,13 +36,12 @@ deepExplore discover details (current:rem) acc =
       updatedGraph = foldl ( \ graph node -> (addEdge current node) graph ) (addNode (current, value) acc) adjacent
   in deepExplore discover details (filter (\candidate -> not $ Map.member candidate updatedGraph) $ adjacent ++ rem) updatedGraph
 
-deepExploreIO :: (Ord k, Monad m) => (k -> m [k]) -> (k -> m v) -> [k] -> Graph k v -> m (Graph k v)
-deepExploreIO _ _ [] acc = return acc
-deepExploreIO discover details (current:rem) acc = do
-  adjacent <- discover current
-  value <- details current
+deepExploreIO :: (Ord k, Monad m) => (k -> m (v, [k])) -> [k] -> Graph k v -> m (Graph k v)
+deepExploreIO _ [] acc = return acc
+deepExploreIO discover (current:rem) acc = do
+  (value, adjacent) <- discover current
   let updatedGraph = foldl ( \ graph node -> (addEdge current node) graph ) (addNode (current, value) acc) adjacent
-  deepExploreIO discover details (filter (\candidate -> not $ Map.member candidate updatedGraph) $ adjacent ++ rem) updatedGraph
+  deepExploreIO discover (filter (\candidate -> not $ Map.member candidate updatedGraph) $ adjacent ++ rem) updatedGraph
 
 graphToTree :: Ord k => k -> Set.Set k -> Graph k v -> Tree v
 graphToTree node visited graph

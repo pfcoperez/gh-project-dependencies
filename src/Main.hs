@@ -48,8 +48,7 @@ metaIssueGraph token organization repository issueId =
         --_ <- putStrLn $ either (\_ -> "") (\x -> show $
         --                                     (fmap (findTaggedUrls . (filterWords ["by", "of"]) . (fmap (toLower)) . unpack) . Issues.issueBody) x
         --                                  ) errorOrIssue
-        return $ foundBlockers >>= (Maybe.maybeToList . (maybeIssueId organization repository))
-      detailsIO issueId = return $ StageIssue {issueNo=issueId, metaIssueNo=0}
+        return $ (StageIssue {issueNo=issueId, metaIssueNo=0}, foundBlockers >>= (Maybe.maybeToList . (maybeIssueId organization repository)))
       subIssues = do
         errorOrIssue <- fetchIssue issueId
         return $ either (\_ -> []) ( \x ->
@@ -60,7 +59,7 @@ metaIssueGraph token organization repository issueId =
                                    ) errorOrIssue
   in do
     seeds <- subIssues
-    Graph.deepExploreIO discoverIO detailsIO seeds Graph.empty
+    Graph.deepExploreIO discoverIO seeds Graph.empty
 
 parseArgs :: [String] -> (Either String (String, String, Int, Int))
 parseArgs [orgStr, repoStr, metaIssueStr, issueStr]
