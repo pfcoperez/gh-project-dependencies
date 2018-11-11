@@ -14,7 +14,7 @@ empty :: Ord k => Graph k v
 empty = Map.empty
 
 addNode :: Ord k => (k, v) -> Graph k v -> Graph k v
-addNode (k, v) graph = Map.insertWith (\ new old -> old ) k (v, Set.empty) graph
+addNode (k, v) graph = Map.insertWith (\ _ old -> old ) k (v, Set.empty) graph
 
 addEdge :: Ord k => k -> k -> Graph k v -> Graph k v
 addEdge from to graph = Map.update (\ (oldV, oldEdges) -> Just (oldV, Set.insert to oldEdges)) from graph
@@ -33,7 +33,7 @@ deepExplore _ _ [] acc = acc
 deepExplore discover details (current:rem) acc =
   let adjacent = discover current
       value = details current
-      updatedGraph = addNode (current, value) $ foldl ( \ graph node -> (addEdge current node) graph ) acc adjacent
+      updatedGraph = foldl ( \ graph node -> (addEdge current node) graph ) (addNode (current, value) acc) adjacent
   in deepExplore discover details (filter (\candidate -> not $ Map.member candidate updatedGraph) $ adjacent ++ rem) updatedGraph
 
 deepExploreIO :: (Ord k, Monad m) => (k -> m [k]) -> (k -> m v) -> [k] -> Graph k v -> m (Graph k v)
@@ -41,7 +41,7 @@ deepExploreIO _ _ [] acc = return acc
 deepExploreIO discover details (current:rem) acc = do
   adjacent <- discover current
   value <- details current
-  let updatedGraph = addNode (current, value) $ foldl ( \ graph node -> (addEdge current node) graph ) acc adjacent
+  let updatedGraph = foldl ( \ graph node -> (addEdge current node) graph ) (addNode (current, value) acc) adjacent
   deepExploreIO discover details (filter (\candidate -> not $ Map.member candidate updatedGraph) $ adjacent ++ rem) updatedGraph
 
 graphToTree :: Ord k => k -> Set.Set k -> Graph k v -> Tree v
