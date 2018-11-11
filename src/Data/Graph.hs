@@ -1,10 +1,11 @@
 --{-# LANGUAGE ScopedTypeVariables #-}
 
-module Data.Graph (empty, addNode, addEdge, nodes, edges, deepExplore, deepExploreIO, Graph) where
+module Data.Graph (empty, addNode, addEdge, nodes, edges, deepExplore, deepExploreIO, graphToTree, Graph) where
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Maybe as Maybe
+import Data.Tree as Tree
 
 type Edges a = Set.Set a
 type Graph a = Map.Map a (Edges a)
@@ -37,3 +38,8 @@ deepExploreIO discover (current:rem) acc = do
   adjacent <- discover current
   let updatedGraph = addNode current $ foldl ( \ graph node -> (addEdge current node) graph ) acc adjacent
   deepExploreIO discover (filter (\candidate -> not $ Map.member candidate updatedGraph) $ adjacent ++ rem) updatedGraph
+
+graphToTree :: Ord a => a -> Set.Set a -> Graph a -> Tree a
+graphToTree node visited graph
+  | Set.member node visited = Tree.Node node []
+  | otherwise = Tree.Node node $ fmap (\child -> graphToTree child (Set.insert node visited) graph) $ edges node graph
