@@ -16,7 +16,7 @@ import qualified Data.Set as Set
 import qualified Data.Tree as Tree
 import qualified Data.Maybe as Maybe
 import qualified Network.URI as URI
-import Data.Char (isDigit)
+import Data.Char (isDigit, toLower)
 import Data.Text (pack)
 
 maybeIssueId :: String -> String -> URI.URI -> Maybe Int
@@ -27,8 +27,14 @@ maybeIssueId organization repository uri = case (URI.pathSegments uri) of
                                                else Nothing
                                              _ -> Nothing
 
+data StageState = Pending | InProgress | Done
+data StageIssue = StageIssue { issueNo :: Int
+                             , metaIssueNo :: Int
+--                             , state :: StageState
+                             } deriving (Show)
 
-metaIssueGraph :: String -> String -> String -> Int -> IO (Graph.Graph Int)
+
+metaIssueGraph :: String -> String -> String -> Int -> IO (Graph.Graph Int StageIssue)
 metaIssueGraph token organization repository issueId =
   let owner = mkOwnerName $ pack organization
       repo = mkRepoName $ pack repository
@@ -36,10 +42,14 @@ metaIssueGraph token organization repository issueId =
       discoverIO issueId = do
         errorOrIssue <- fetchIssue issueId
         let blockers issue =
-              let tagged = (fmap (findTaggedUrls . unpack) . Issues.issueBody) issue
-              in concat $ Maybe.maybeToList $ tagged >>= (\ m -> m Map.!? "by")
+              let tagged = (fmap (findTaggedUrls . (filterWords ["by", "of"]) . (fmap (toLower)) . unpack) . Issues.issueBody) issue
+              in concat $ Maybe.maybeToList $ tagged >>= (\ m -> m Map.!? "blocked")
             foundBlockers = either (\_ -> []) blockers errorOrIssue
+        --_ <- putStrLn $ either (\_ -> "") (\x -> show $
+        --                                     (fmap (findTaggedUrls . (filterWords ["by", "of"]) . (fmap (toLower)) . unpack) . Issues.issueBody) x
+        --                                  ) errorOrIssue
         return $ foundBlockers >>= (Maybe.maybeToList . (maybeIssueId organization repository))
+      detailsIO issueId = return $ StageIssue {issueNo=issueId, metaIssueNo=0}
       subIssues = do
         errorOrIssue <- fetchIssue issueId
         return $ either (\_ -> []) ( \x ->
@@ -50,7 +60,7 @@ metaIssueGraph token organization repository issueId =
                                    ) errorOrIssue
   in do
     seeds <- subIssues
-    Graph.deepExploreIO discoverIO seeds Graph.empty
+    Graph.deepExploreIO discoverIO detailsIO seeds Graph.empty
 
 parseArgs :: [String] -> (Either String (String, String, Int, Int))
 parseArgs [orgStr, repoStr, metaIssueStr, issueStr]
