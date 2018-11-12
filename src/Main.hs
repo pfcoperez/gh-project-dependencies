@@ -29,7 +29,7 @@ maybeIssueId organization repository uri = case (URI.pathSegments uri) of
 
 data StageState = Pending | InProgress | Done
 data StageIssue = StageIssue { issueNo :: Int
-                             , metaIssueNo :: Int
+                             , metaIssueNo :: Maybe Int
 --                             , state :: StageState
                              } deriving (Show)
 
@@ -41,14 +41,20 @@ metaIssueGraph token organization repository issueId =
       fetchIssue issueId = Issues.issue' (Just $ Issues.OAuth $ fromString token) owner repo (Id issueId)
       discoverIO issueId = do
         errorOrIssue <- fetchIssue issueId
-        let blockers issue =
+        let issueInfo issue =
               let tagged = (fmap (findTaggedUrls . (filterWords ["by", "of"]) . (fmap (toLower)) . unpack) . Issues.issueBody) issue
-              in concat $ Maybe.maybeToList $ tagged >>= (\ m -> m Map.!? "blocked")
-            foundBlockers = either (\_ -> []) blockers errorOrIssue
-        --_ <- putStrLn $ either (\_ -> "") (\x -> show $
-        --                                     (fmap (findTaggedUrls . (filterWords ["by", "of"]) . (fmap (toLower)) . unpack) . Issues.issueBody) x
-        --                                  ) errorOrIssue
-        return $ (StageIssue {issueNo=issueId, metaIssueNo=0}, foundBlockers >>= (Maybe.maybeToList . (maybeIssueId organization repository)))
+                  blockers = concat $ Maybe.maybeToList $ tagged >>= (\ m -> m Map.!? "blocked")
+                  maybeMetaIssue = do
+                    m <- tagged
+                    metaIssues <- m Map.!? "part"
+                    let ids = Maybe.mapMaybe (maybeIssueId organization repository) metaIssues
+                    Maybe.listToMaybe ids
+              in (maybeMetaIssue, blockers)
+
+            (foundMetaIssue, foundBlockers) = either (\_ -> (Nothing, [])) issueInfo errorOrIssue
+
+        return $ (StageIssue {issueNo=issueId, metaIssueNo=foundMetaIssue}, Maybe.mapMaybe (maybeIssueId organization repository) foundBlockers)
+
       subIssues = do
         errorOrIssue <- fetchIssue issueId
         return $ either (\_ -> []) ( \x ->
