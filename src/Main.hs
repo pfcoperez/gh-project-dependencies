@@ -18,6 +18,7 @@ import qualified Data.Maybe as Maybe
 import qualified Network.URI as URI
 import Data.Char (isDigit, toLower)
 import Data.Text (pack)
+import Render
 
 maybeIssueId :: String -> String -> URI.URI -> Maybe Int
 maybeIssueId organization repository uri = case (URI.pathSegments uri) of
@@ -88,7 +89,8 @@ main = do
   res <- either return ( \ (organization, repository, metaIssue, issue) ->
                            do
                              graph <- metaIssueGraph token organization repository metaIssue
-                             let tree = fmap show $ Graph.graphToTree issue Set.empty graph
+                             let tree = fmap (issueNo) $ Graph.graphToTree issue Set.empty graph
+                             _ <- renderT "/tmp/deps.svg" tree
                              return $ Tree.drawTree tree
                        ) $ parseArgs strArgs  
 
