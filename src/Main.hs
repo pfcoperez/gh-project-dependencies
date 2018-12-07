@@ -7,6 +7,9 @@ import qualified Data.Graph as Graph
 import qualified GitHub.Endpoints.Issues as Issues
 import GitHub.Data.Id (Id (Id))
 import GitHub.Data (mkOwnerName, mkRepoName)
+import GitHub.Data.Options (IssueState)
+import GitHub.Data.Definitions (IssueLabel, labelName)
+import GitHub.Data.Name (untagName)
 import Data.String (fromString)
 import Data.Text (unpack)
 import System.Environment (lookupEnv, getArgs)
@@ -28,10 +31,10 @@ maybeIssueId organization repository uri = case (URI.pathSegments uri) of
                                                else Nothing
                                              _ -> Nothing
 
-data StageState = Pending | InProgress | Done
+data StageState = Pending | InProgress | Done deriving Show
 data StageIssue = StageIssue { issueNo :: Int
                              , metaIssueNo :: Maybe Int
---                             , state :: StageState
+                             , state :: StageState
                              } deriving (Show)
 
 
@@ -50,11 +53,18 @@ metaIssueGraph token organization repository issueId =
                     metaIssues <- m Map.!? "part"
                     let ids = Maybe.mapMaybe (maybeIssueId organization repository) metaIssues
                     Maybe.listToMaybe ids
-              in (maybeMetaIssue, blockers)
+ 
+                  tagNames = fmap ((fmap toLower) . unpack . untagName . labelName) $ Issues.issueLabels issue
+                  state = case (Issues.issueState issue, elem "in progress" tagNames) of
+                            (Issues.StateClosed, _) -> Done
+                            (_, True) -> InProgress
+                            _ -> Pending
+                            
+              in (maybeMetaIssue, blockers, state)
 
-            (foundMetaIssue, foundBlockers) = either (\_ -> (Nothing, [])) issueInfo errorOrIssue
+            (foundMetaIssue, foundBlockers, foundState) = either (\_ -> (Nothing, [], Pending)) issueInfo errorOrIssue
 
-        return $ (StageIssue {issueNo=issueId, metaIssueNo=foundMetaIssue}, Maybe.mapMaybe (maybeIssueId organization repository) foundBlockers)
+        return $ (StageIssue {issueNo=issueId, metaIssueNo=foundMetaIssue, state=foundState}, Maybe.mapMaybe (maybeIssueId organization repository) foundBlockers)
 
       subIssues = do
         errorOrIssue <- fetchIssue issueId
@@ -89,7 +99,7 @@ main = do
   res <- either return ( \ (organization, repository, metaIssue, issue) ->
                            do
                              graph <- metaIssueGraph token organization repository metaIssue
-                             let tree = fmap (issueNo) $ Graph.graphToTree issue Set.empty graph
+                             let tree = fmap (show) $ Graph.graphToTree issue Set.empty graph
                              _ <- renderT "/tmp/deps.svg" tree
                              return $ Tree.drawTree tree
                        ) $ parseArgs strArgs  
