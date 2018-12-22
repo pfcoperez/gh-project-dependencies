@@ -2,6 +2,7 @@
 
 module Main where
 
+import Data (StageState(..), StageIssue(..))
 import Data.String.Utils
 import qualified Data.Graph as Graph
 import qualified GitHub.Endpoints.Issues as Issues
@@ -30,12 +31,6 @@ maybeIssueId organization repository uri = case (URI.pathSegments uri) of
                                                  Just ((read (filter isDigit id)) :: Int)
                                                else Nothing
                                              _ -> Nothing
-
-data StageState = Pending | InProgress | Done deriving Show
-data StageIssue = StageIssue { issueNo :: Int
-                             , metaIssueNo :: Maybe Int
-                             , state :: StageState
-                             } deriving (Show)
 
 
 metaIssueGraph :: String -> String -> String -> Int -> IO (Graph.Graph Int StageIssue)
@@ -99,9 +94,10 @@ main = do
   res <- either return ( \ (organization, repository, metaIssue, issue) ->
                            do
                              graph <- metaIssueGraph token organization repository metaIssue
-                             let tree = fmap (show) $ Graph.graphToTree issue Set.empty graph
-                             _ <- renderT "/tmp/deps.svg" tree
-                             return $ Tree.drawTree tree
+                             let tree = Graph.graphToTree issue Set.empty graph
+                             let strTree = fmap (show) tree
+                             _ <- renderIssuesTree "/tmp/deps.svg" tree
+                             return $ Tree.drawTree strTree
                        ) $ parseArgs strArgs  
 
   putStrLn res
