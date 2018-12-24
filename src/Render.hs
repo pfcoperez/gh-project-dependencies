@@ -26,9 +26,12 @@ issueColour stageIssue = case (state stageIssue) of
                            InProgress -> lightyellow
                            Done -> lightgreen
 
+renderDependency :: P2 Float -> P2 Float -> QDiagram SVG V2 Float Any
+renderDependency = arrowBetween' (with & arrowHead .~ dart & headGap .~ 20.0)
+
 issueDiagram :: Tree (StageIssue, P2 Float) -> QDiagram SVG V2 Float Any
 issueDiagram = pad 1.25 . centerXY .
-  (renderTree (\issue -> (text (show $ issueNo issue) <> roundedRect 5 2 0.75 # fc (issueColour issue))) (~~))
+  (renderTree (\issue -> (text (show $ issueNo issue) <> roundedRect 5 2 0.75 # fc (issueColour issue))) renderDependency)
 
 renderIssuesTree :: String -> Tree StageIssue -> IO ()
 renderIssuesTree outputPath tree = renderSVG outputPath dimensions (issueDiagram $ layout tree)
