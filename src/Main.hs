@@ -96,7 +96,7 @@ main = do
                              graph <- metaIssueGraph token organization repository metaIssue
                              let tree = Graph.graphToTree issue Set.empty graph
                              let strTree = fmap (show) tree
-                             _ <- renderIssuesTree "/tmp/deps.svg" tree
+                             _ <- renderIssuesTree "/tmp/deps.png" tree
                              return $ Tree.drawTree strTree
                        ) $ parseArgs strArgs  
 
