@@ -1,4 +1,4 @@
-# Github projects dependencies
+# GitHub projects dependencies
 
 This is a project organization assistant initially aimed to produce artifacts, such as dependency tree diagrams, which could potentially be included in the issues and PR descriptions of software projects hosed at GitHub.
 
