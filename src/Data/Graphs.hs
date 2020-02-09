@@ -1,6 +1,6 @@
 --{-# LANGUAGE ScopedTypeVariables #-}
 
-module Data.Graph (empty, addNode, addEdge, nodes, edges, deepExplore, deepExploreIO, graphToTree, Graph) where
+module Data.Graphs (empty, addNode, addEdge, nodes, edges, deepExplore, deepExploreIO, graphToTree, Graph) where
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set

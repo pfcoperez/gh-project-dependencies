@@ -1,11 +1,11 @@
 module Data (
   StageState(..),
   StageIssue(..),
-  module Data.Graph,
+  module Data.Graphs,
   module Data.String.Utils
   ) where
 
-import Data.Graph
+import Data.Graphs
 import Data.String.Utils
 
 data StageState = Pending | InProgress | Done deriving Show

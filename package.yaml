@@ -1,0 +1,60 @@
+name:                gh-project-dependencies
+version:             0.1.0.0
+github:              "pfcoperez/gh-project-dependencies"
+license:             Apache-2.0
+author:              "Pablo Francisco Perez Hidalgo"
+maintainer:          "contact@pablofranciscoperez.info"
+copyright:           "2019 Pablo Francisco Perez Hidalgo"
+
+extra-source-files:
+- README.md
+- LICENSE
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/gh-project-dependencies#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- text
+- network-uri
+- containers
+- github
+- diagrams
+- diagrams-cairo
+- diagrams-contrib
+- diagrams-lib
+
+library:
+  source-dirs: src
+
+executables:
+  gh-project-dependencies-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+#    - -prof 
+#    - -fprof-auto
+#    - -fprof-cafs
+    dependencies:
+    - gh-project-dependencies
+
+tests:
+  gh-project-dependencies-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - gh-project-dependencies

@@ -1,6 +1,6 @@
 module DependenciesAssistant (metaIssueGraph, module Render) where
 import qualified Network.URI as URI
-import qualified Data.Graph as Graph
+import qualified Data.Graphs as Graph
 import qualified GitHub.Endpoints.Issues as Issues
 import Data.Maybe
 import GitHub.Data.Options (IssueState)

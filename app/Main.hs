@@ -4,7 +4,7 @@ module Main where
 import Data.Maybe
 
 import DependenciesAssistant
-import Data.Graph (graphToTree)
+import Data.Graphs (graphToTree)
 import Data.Set as Set
 import Data.Tree as Tree
 import Data.Char (isDigit, toLower)
@@ -12,10 +12,10 @@ import System.Environment (lookupEnv, getArgs)
 import System.Exit (exitSuccess)
 
 parseArgs :: [String] -> (Either String (String, String, Int, Int))
-parseArgs [orgStr, repoStr, metaIssueStr, issueStr]
+parseArgs [_, orgStr, repoStr, metaIssueStr, issueStr]
   | all (all isDigit) [metaIssueStr, issueStr] = Right (orgStr, repoStr, read metaIssueStr, read issueStr)
   | otherwise = Left "Organization, repository, metaissue and issue arguments are required"
-parseArgs _ = Left "Invalid arguments list"
+parseArgs argList = Left $ "Invalid arguments list: " ++ (show argList)
 
 main :: IO ()
 main = do
